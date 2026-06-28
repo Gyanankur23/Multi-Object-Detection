@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# YOLO/Ultralytics
+runs/
+datasets/
+*.pt
+*.torchscript
+*.onnx
+*.engine
+
+# Dataset
+dataset/
+raw_images/
+raw_labels/
+custom_dataset/
+mobile_phone_images/
+mobile_phone_labels/
+person_images/
+person_labels/
+backpack_images/
+backpack_labels/
+pen_images/
+pen_labels/
+notebook_images/
+notebook_labels/
+
+# Test outputs
+test_results/
+snapshots/
+bus.jpg
+*.jpg
+*.png
+*.jpeg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+.vercel

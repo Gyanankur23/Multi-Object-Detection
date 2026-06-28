@@ -1,0 +1,18 @@
+# Custom YOLO Dataset Configuration
+# Classes: backpack, pen, person, mobile phone, notebook
+
+path: custom_dataset  # dataset root dir
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+test: images/test  # test images (optional)
+
+# Class names
+names:
+  0: backpack
+  1: pen
+  2: person
+  3: mobile phone
+  4: notebook
+
+# Dataset information
+nc: 5  # number of classes
