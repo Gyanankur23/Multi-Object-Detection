@@ -45,16 +45,17 @@ dataset/
 raw_images/
 raw_labels/
 custom_dataset/
-mobile_phone_images/
-mobile_phone_labels/
+images/
 person_images/
 person_labels/
 backpack_images/
 backpack_labels/
-pen_images/
-pen_labels/
-notebook_images/
-notebook_labels/
+toothbrush_images/
+toothbrush_labels/
+bottle_images/
+bottle_labels/
+book_images/
+book_labels/
 
 # Test outputs
 test_results/

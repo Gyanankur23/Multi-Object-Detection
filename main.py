@@ -1,7 +1,7 @@
 """
 FastAPI Application for Custom YOLO Object Detection
 Server-side implementation using locally trained custom YOLO model
-Supports custom object classes: backpack, pen, person, mobile phone, notebook
+Supports custom object classes: person, backpack, toothbrush, bottle, book
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -26,11 +26,11 @@ model = None
 
 # Custom class names for trained model
 CUSTOM_CLASSES = {
-    0: "backpack",
-    1: "pen", 
-    2: "person",
-    3: "mobile phone",
-    4: "notebook"
+    0: "person",
+    1: "backpack", 
+    2: "toothbrush",
+    3: "bottle",
+    4: "book"
 }
 
 def get_class_name(class_id: int):
@@ -154,7 +154,7 @@ async def model_info():
             "model_path": "runs/train/custom_model/weights/best.pt",
             "classes": CUSTOM_CLASSES,
             "num_classes": len(CUSTOM_CLASSES),
-            "description": "Custom object detection for 5 classes: backpack, pen, person, mobile phone, notebook"
+            "description": "Custom object detection for 5 classes: person, backpack, toothbrush, bottle, book"
         }
     else:
         return {

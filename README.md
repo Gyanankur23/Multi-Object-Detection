@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 
-Real-time object detection system with complete custom model training pipeline. Supports 5 custom object classes: backpack, pen, person, mobile phone, notebook.
+Real-time object detection system with complete custom model training pipeline. Supports 5 custom object classes: person, backpack, toothbrush, bottle, book.
 
 ![Object Detection Demo](https://img.shields.io/badge/Demo-Live%20Available-brightgreen)
 
@@ -14,7 +14,6 @@ Real-time object detection system with complete custom model training pipeline. 
 
 - Real-time webcam object detection with custom trained YOLO model
 - Complete custom model training pipeline with transfer learning
-- Automated dataset capture and annotation tools
 - Professional web interface for detection
 - Support for custom object classes
 - Dataset management and validation utilities
@@ -30,12 +29,12 @@ Access at http://localhost:8000
 
 ### Train Custom Model
 ```bash
-# Capture training images (150 images per class)
-python capture_backpack.py
-python capture_pen.py
-python capture_person.py
-python capture_mobile_phone.py
-python capture_notebook.py
+# Add images to images/ folder with subfolders:
+# images/person/
+# images/backpack/
+# images/toothbrush/
+# images/bottle/
+# images/book/
 
 # Manually annotate images using LabelImg
 # Install: pip install labelImg
@@ -59,17 +58,18 @@ python train_custom_model.py
 object-detector-self-model/
 ├── main.py                          # FastAPI server with custom YOLO model
 ├── train_custom_model.py           # Custom YOLO training script
-├── capture_backpack.py             # Backpack image capture
-├── capture_pen.py                  # Pen image capture
-├── capture_person.py               # Person image capture
-├── capture_mobile_phone.py         # Mobile phone image capture
-├── capture_notebook.py             # Notebook image capture
 ├── split_dataset.py                # Dataset splitting utility
 ├── validate_dataset.py              # Dataset validation utility
 ├── data.yaml                        # Dataset configuration
 ├── requirements.txt                # Python dependencies
 ├── templates/                       # HTML templates
 │   └── index.html                  # Web interface
+├── images/                         # Dataset images (gitignored)
+│   ├── person/                    # Person images
+│   ├── backpack/                  # Backpack images
+│   ├── toothbrush/                # Toothbrush images
+│   ├── bottle/                    # Bottle images
+│   └── book/                      # Book images
 ├── custom_dataset/                 # Custom dataset structure (gitignored)
 │   ├── data.yaml                  # Dataset configuration
 │   ├── images/                    # Training/validation/test images
@@ -81,8 +81,8 @@ object-detector-self-model/
 
 The project includes complete infrastructure for training custom YOLO models:
 
-1. **Data Collection**: Automated webcam capture scripts for rapid dataset creation
-2. **Annotation**: Grid-based annotation generator for initial dataset structure
+1. **Data Collection**: Add images to images/ folder with subfolders for each class
+2. **Manual Annotation**: Use LabelImg to draw precise bounding boxes
 3. **Dataset Management**: Automatic splitting (70/20/10) and validation utilities
 4. **Model Training**: Transfer learning from YOLOv8n base model on custom datasets
 5. **Model Evaluation**: Validation and testing with comprehensive metrics
@@ -90,17 +90,16 @@ The project includes complete infrastructure for training custom YOLO models:
 ## Custom Classes
 
 The system is trained to detect 5 custom object classes:
-- backpack (ID: 0)
-- pen (ID: 1)
-- person (ID: 2)
-- mobile phone (ID: 3)
-- notebook (ID: 4)
+- person (ID: 0)
+- backpack (ID: 1)
+- toothbrush (ID: 2)
+- bottle (ID: 3)
+- book (ID: 4)
 
 ## Dataset Requirements
 
 For optimal training performance:
 - 150 images per class (750 total)
-- 1 image captured every 5 seconds for quality
 - YOLO format annotations (.txt files)
 - 70/20/10 train/validation/test split
 - Diverse lighting, angles, and backgrounds
@@ -108,7 +107,7 @@ For optimal training performance:
 ## Complete Training Process
 
 ### Step 1: Data Collection
-We captured 150 images for each of the 5 classes (backpack, pen, person, mobile phone, notebook) using automated webcam capture scripts. Each image was captured at 5-second intervals to ensure quality and variety in angles, lighting, and backgrounds.
+We collected 150 images for each of the 5 classes (person, backpack, toothbrush, bottle, book) by adding images to the images/ folder with subfolders for each class. Images were selected to ensure quality and variety in angles, lighting, and backgrounds.
 
 ### Step 2: Manual Annotation
 Each captured image was manually annotated using LabelImg to draw precise bounding boxes around the target objects. Annotations were saved in YOLO format as `.txt` files with normalized coordinates (0-1 range). Each annotation file contains:
@@ -121,7 +120,7 @@ Example annotation format:
 3 0.456789 0.345678 0.234567 0.345678
 ```
 Where:
-- 3 = class ID (mobile phone)
+- 3 = class ID (bottle)
 - 0.456789 = center x coordinate
 - 0.345678 = center y coordinate
 - 0.234567 = width
