@@ -36,9 +36,6 @@ ENV/
 runs/
 datasets/
 *.pt
-*.torchscript
-*.onnx
-*.engine
 
 # Dataset
 dataset/
@@ -56,6 +53,9 @@ bottle_images/
 bottle_labels/
 book_images/
 book_labels/
+mobile_phone_images/
+mobile_phone_labels/
+custom_dataset_labels/
 
 # Test outputs
 test_results/
