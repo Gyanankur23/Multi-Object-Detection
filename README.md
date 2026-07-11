@@ -8,6 +8,10 @@
 
 Real-time object detection system with complete custom model training pipeline. Supports 5 custom object classes: person, backpack, toothbrush, bottle, book.
 
+## Updates
+- July 4, 2026: Initial project setup
+- July 5, 2026: Added dataset structure
+
 ![Object Detection Demo](https://img.shields.io/badge/Demo-Live%20Available-brightgreen)
 
 ## Features
