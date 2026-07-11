@@ -120,6 +120,37 @@ For optimal training performance:
 ### Step 1: Data Collection
 We collected 150 images for each of the 5 classes (person, backpack, toothbrush, bottle, book) by adding images to the images/ folder with subfolders for each class. Images were selected to ensure quality and variety in angles, lighting, and backgrounds.
 
+**Person Images (150):** Sampled from a Kaggle face dataset using random selection to ensure diversity:
+```python
+import os
+import shutil
+import random
+
+source_dir = '/kaggle/input'
+destination_dir = '/kaggle/working/images/person'
+os.makedirs(destination_dir, exist_ok=True)
+
+all_images = []
+valid_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.bmp')
+
+for dirname, _, filenames in os.walk(source_dir):
+    for filename in filenames:
+        if filename.lower().endswith(valid_extensions):
+            all_images.append(os.path.join(dirname, filename))
+
+if len(all_images) >= 150:
+    sampled_images = random.sample(all_images, 150)
+    print(f"Found {len(all_images)} images. Sampling 150 random faces...")
+else:
+    sampled_images = all_images
+    print(f"Warning: Only found {len(all_images)} images. Copying all of them.")
+
+for img_path in sampled_images:
+    shutil.copy(img_path, destination_dir)
+```
+
+**Phone Images (100):** Sourced from Datacluster Labs Phone Dataset for mobile phone detection training.
+
 ### Step 2: Manual Annotation
 Each captured image was manually annotated using LabelImg to draw precise bounding boxes around the target objects. Annotations were saved in YOLO format as `.txt` files with normalized coordinates (0-1 range). Each annotation file contains:
 - Class ID (0-4 corresponding to our 5 classes)

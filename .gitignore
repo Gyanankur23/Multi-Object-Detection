@@ -60,6 +60,7 @@ custom_dataset_labels/
 test_results/
 snapshots/
 bus.jpg
+test/
 
 # OS
 .DS_Store
