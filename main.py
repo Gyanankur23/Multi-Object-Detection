@@ -7,17 +7,26 @@ For deployment, uses ONNX runtime for optimal performance and size
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from contextlib import asynccontextmanager
-import cv2
-import numpy as np
 import os
 import io
 import logging
-import onnxruntime as ort
+
+# Try to import ML dependencies (optional for deployment)
+try:
+    import cv2
+    import numpy as np
+    import onnxruntime as ort
+    ML_DEPENDENCIES_AVAILABLE = True
+except ImportError:
+    ML_DEPENDENCIES_AVAILABLE = False
+    cv2 = None
+    np = None
+    ort = None
 
 # Try to import ultralytics for local development (optional)
 try:
@@ -198,6 +207,17 @@ async def read_root(request: Request):
 @app.post("/detect")
 def detect_objects(file: UploadFile = File(...)):
     global model, onnx_session, use_onnx
+    
+    if not ML_DEPENDENCIES_AVAILABLE:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": "ML dependencies not available in this deployment",
+                "message": "This deployment is running in minimal mode. For full object detection capabilities, use the Railway deployment.",
+                "railway_url": "https://railway.app"
+            }
+        )
+    
     if model is None and onnx_session is None:
         raise HTTPException(status_code=500, detail="Model not initialized")
     
