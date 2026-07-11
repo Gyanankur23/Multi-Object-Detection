@@ -15,6 +15,7 @@ Real-time object detection system with complete custom model training pipeline. 
 - July 7, 2026: Improved model validation
 - July 8, 2026: Enhanced detection accuracy
 - July 9, 2026: Optimized inference speed
+- July 10, 2026: Updated class labels
 
 ![Object Detection Demo](https://img.shields.io/badge/Demo-Live%20Available-brightgreen)
 
