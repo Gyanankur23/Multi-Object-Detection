@@ -1,0 +1,22 @@
+# Exclude large directories from Vercel deployment
+images/
+runs/
+custom_dataset/
+custom_dataset_labels/
+test/
+static/
+
+# Exclude model files
+*.pt
+*.onnx
+yolov8n.pt
+
+# Exclude local development files
+requirements-local.txt
+*.log
+*.tmp
+
+# Exclude IDE files
+.vscode/
+.idea/
+*.swp
