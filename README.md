@@ -33,12 +33,21 @@ Real-time object detection system with complete custom model training pipeline. 
 
 ## Quick Start
 
-### Run Detection Server
+### Run Detection Server (Local)
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-local.txt
 python main.py
 ```
 Access at http://localhost:8000
+
+### Deploy to Railway (Recommended for Production)
+1. Go to https://railway.app and sign up/login
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select: `Gyanankur23/Multi-Object-Detection`
+4. Railway will automatically detect and deploy the Python app
+5. Once deployed, update `BASE_URL` in `templates/index.html` with your Railway URL
+
+**Live Deployment:** https://object-detector-production.up.railway.app
 
 ### Train Custom Model
 ```bash
