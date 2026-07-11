@@ -28,6 +28,8 @@ Real-time object detection system with complete custom model training pipeline. 
 - Professional web interface for detection
 - Support for custom object classes
 - Dataset management and validation utilities
+- ONNX model support for optimized deployment
+- Vercel deployment ready
 
 ## Quick Start
 
@@ -61,6 +63,9 @@ python validate_dataset.py
 
 # Train custom model
 python train_custom_model.py
+
+# Convert to ONNX for optimized deployment
+python convert_to_onnx.py
 ```
 
 ## Project Structure
@@ -69,10 +74,12 @@ python train_custom_model.py
 object-detector-self-model/
 ├── main.py                          # FastAPI server with custom YOLO model
 ├── train_custom_model.py           # Custom YOLO training script
+├── convert_to_onnx.py               # ONNX conversion script
 ├── split_dataset.py                # Dataset splitting utility
 ├── validate_dataset.py              # Dataset validation utility
 ├── data.yaml                        # Dataset configuration
 ├── requirements.txt                # Python dependencies
+├── vercel.json                      # Vercel deployment configuration
 ├── templates/                       # HTML templates
 │   └── index.html                  # Web interface
 ├── images/                         # Dataset images (gitignored)
@@ -232,7 +239,7 @@ The trained model was integrated into a FastAPI server (`main.py`) for real-time
 
 **Server Architecture:**
 - FastAPI web server for HTTP endpoints
-- YOLO model loaded on startup
+- YOLO model loaded on startup (supports both .pt and .onnx formats)
 - Image upload endpoint for inference
 - Bounding box drawing and annotation
 - JPEG response with annotated image
@@ -240,12 +247,33 @@ The trained model was integrated into a FastAPI server (`main.py`) for real-time
 
 **Key Features:**
 - Custom class detection (5 classes)
-- Confidence threshold filtering
-- Real-time inference (~50ms per image)
-- Automatic bounding box visualization
-- Error handling and logging
+- ONNX model support for optimized inference
+- Automatic fallback to PyTorch if ONNX not available
+- Vercel deployment ready
 
-### Step 8: Frontend Integration
+### Step 8: ONNX Conversion for Deployment
+For optimized deployment on cloud platforms, the model can be converted to ONNX format:
+
+**Conversion Process:**
+```bash
+python convert_to_onnx.py
+```
+
+**Benefits of ONNX:**
+- Faster inference speed
+- Cross-platform compatibility
+- Smaller model size
+- Better resource utilization
+- Optimized for CPU inference
+
+**Deployment:**
+The application is configured for Vercel deployment with:
+- Python runtime support
+- ONNX runtime for inference
+- CORS headers for client-side access
+- Automatic scaling
+
+### Step 9: Frontend Integration
 The web interface (`templates/index.html`) provides:
 - Webcam access and live preview
 - Frame capture and upload to server

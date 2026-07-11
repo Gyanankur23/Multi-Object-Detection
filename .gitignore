@@ -36,6 +36,7 @@ ENV/
 runs/
 datasets/
 *.pt
+*.onnx
 
 # Dataset
 dataset/
