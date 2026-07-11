@@ -11,6 +11,7 @@ Real-time object detection system with complete custom model training pipeline. 
 ## Updates
 - July 4, 2026: Initial project setup
 - July 5, 2026: Added dataset structure
+- July 6, 2026: Updated training pipeline
 
 ![Object Detection Demo](https://img.shields.io/badge/Demo-Live%20Available-brightgreen)
 
