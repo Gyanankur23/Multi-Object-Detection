@@ -3,6 +3,7 @@ FastAPI Application for Custom YOLO Object Detection
 Server-side implementation using locally trained custom YOLO model
 Supports custom object classes: person, backpack, toothbrush, bottle, book
 Supports both PyTorch (.pt) and ONNX (.onnx) model formats
+For deployment, uses ONNX runtime for optimal performance and size
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -13,11 +14,17 @@ from fastapi import Request
 from contextlib import asynccontextmanager
 import cv2
 import numpy as np
-from ultralytics import YOLO
 import os
 import io
 import logging
 import onnxruntime as ort
+
+# Try to import ultralytics for local development (optional)
+try:
+    from ultralytics import YOLO
+    ULTRALYTICS_AVAILABLE = True
+except ImportError:
+    ULTRALYTICS_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,16 +64,19 @@ async def lifespan(app: FastAPI):
         onnx_session = ort.InferenceSession('yolov8n.onnx', providers=['CPUExecutionProvider'])
         use_onnx = True
         logger.info("ONNX model loaded successfully.")
-    # Fall back to PyTorch models
-    elif os.path.exists('runs/train/custom_model/weights/best.pt'):
-        logger.info("Loading custom trained PyTorch model...")
-        model = YOLO('runs/train/custom_model/weights/best.pt')
-    elif os.path.exists('yolov8n.pt'):
-        logger.info("Custom model not found, loading base PyTorch model for transfer learning...")
-        model = YOLO('yolov8n.pt')
+    # Fall back to PyTorch models (only if ultralytics is available)
+    elif ULTRALYTICS_AVAILABLE:
+        if os.path.exists('runs/train/custom_model/weights/best.pt'):
+            logger.info("Loading custom trained PyTorch model...")
+            model = YOLO('runs/train/custom_model/weights/best.pt')
+        elif os.path.exists('yolov8n.pt'):
+            logger.info("Custom model not found, loading base PyTorch model for transfer learning...")
+            model = YOLO('yolov8n.pt')
+        else:
+            logger.info("No model found, downloading base model...")
+            model = YOLO('yolov8n.pt')
     else:
-        logger.info("No model found, downloading base model...")
-        model = YOLO('yolov8n.pt')
+        logger.warning("No ONNX model found and ultralytics not available. Please provide an ONNX model for deployment.")
     
     logger.info("Model loaded successfully.")
     yield
