@@ -289,13 +289,13 @@
             
             try {
                 status.className = 'status loading';
-                status.textContent = 'Connecting to Roboflow API...';
+                status.textContent = 'Loading custom YOLO model...';
                 
                 // Check server health
                 const response = await fetch(`${BASE_URL}/health`);
                 if (response.ok) {
                     status.className = 'status inactive';
-                    status.textContent = 'Connected to Roboflow API - Ready to start camera';
+                    status.textContent = 'Custom YOLO model loaded - Ready to start camera';
                     startBtn.disabled = false;
                 } else {
                     throw new Error('Server not responding');
@@ -398,7 +398,7 @@
                 
                 isStreaming = true;
                 status.className = 'status active';
-                status.textContent = 'Camera active - Detecting people via Roboflow API...';
+                status.textContent = 'Camera active - Detecting objects with custom YOLO model...';
                 startBtn.disabled = true;
                 stopBtn.disabled = false;
                 
