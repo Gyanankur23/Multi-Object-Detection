@@ -324,7 +324,17 @@
                 const tempCtx = tempCanvas.getContext('2d');
                 tempCtx.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
                 
-                // Convert to blob
+                // Show raw video feed as fallback (immediate display)
+                tempCanvas.toBlob((rawBlob) => {
+                    if (rawBlob && isStreaming) {
+                        if (videoFeed.src.startsWith('blob:')) {
+                            URL.revokeObjectURL(videoFeed.src);
+                        }
+                        videoFeed.src = URL.createObjectURL(rawBlob);
+                    }
+                }, 'image/jpeg', 0.8);
+                
+                // Convert to blob for detection
                 tempCanvas.toBlob(async (blob) => {
                     if (!blob || !isStreaming) return;
                     
