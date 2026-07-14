@@ -26,7 +26,7 @@ for seq in sequences:
     w  = random.uniform(0.15, 0.25)
     h  = random.uniform(0.20, 0.35)
     
-    # Directional vectors for smooth object movement across the video
+   
     dx = random.uniform(-0.003, 0.003)
     dy = random.uniform(-0.002, 0.002)
 
