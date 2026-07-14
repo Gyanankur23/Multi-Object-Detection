@@ -132,7 +132,7 @@ def validate_dataset(dataset_dir='custom_dataset'):
     
     # Class distribution
     print("\n5. Class distribution:")
-    class_names = ['backpack', 'pen', 'person', 'mobile phone', 'watch', 'book']
+    class_names = ['bagpack', 'bottle', 'toothbrush', 'person', 'phone', 'book']
     for class_id in range(6):
         count = class_counts.get(class_id, 0)
         print(f"  {class_names[class_id]} (ID {class_id}): {count} annotations")

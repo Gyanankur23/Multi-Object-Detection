@@ -4,32 +4,17 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-green)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-8.1.0-orange)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 
-Real-time object detection system with complete custom model training pipeline. Supports 5 custom object classes: person, backpack, toothbrush, bottle, book.
-
-## Updates
-- July 4, 2026: Initial project setup
-- July 5, 2026: Added dataset structure
-- July 6, 2026: Updated training pipeline
-- July 7, 2026: Improved model validation
-- July 8, 2026: Enhanced detection accuracy
-- July 9, 2026: Optimized inference speed
-- July 10, 2026: Updated class labels
-- July 11, 2026: Fixed annotation format
-- July 12, 2026: Final deployment ready
-
-![Object Detection Demo](https://img.shields.io/badge/Demo-Live%20Available-brightgreen)
+Real-time object detection system with custom model training pipeline. Supports 6 custom object classes: bagpack, bottle, toothbrush, person, phone, book.
 
 ## Features
 
 - Real-time webcam object detection with custom trained YOLO model
 - Complete custom model training pipeline with transfer learning
 - Professional web interface for detection
-- Support for custom object classes
+- Support for 6 custom object classes
 - Dataset management and validation utilities
 - ONNX model support for optimized deployment
-- Vercel deployment ready
 
 ## Quick Start
 
@@ -40,22 +25,14 @@ python main.py
 ```
 Access at http://localhost:8000
 
-### Deploy to Railway (Recommended for Production)
-1. Go to https://railway.app and sign up/login
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select: `Gyanankur23/Multi-Object-Detection`
-4. Railway will automatically detect and deploy the Python app
-5. Once deployed, update `BASE_URL` in `templates/index.html` with your Railway URL
-
-**Live Deployment:** https://object-detector-production.up.railway.app
-
 ### Train Custom Model
 ```bash
 # Add images to images/ folder with subfolders:
-# images/person/
-# images/backpack/
-# images/toothbrush/
+# images/bagpack/
 # images/bottle/
+# images/toothbrush/
+# images/person/
+# images/phone/
 # images/book/
 
 # Manually annotate images using LabelImg
@@ -80,27 +57,36 @@ python convert_to_onnx.py
 ## Project Structure
 
 ```
-object-detector-self-model/
+multi-object-detection/
 ├── main.py                          # FastAPI server with custom YOLO model
 ├── train_custom_model.py           # Custom YOLO training script
 ├── convert_to_onnx.py               # ONNX conversion script
 ├── split_dataset.py                # Dataset splitting utility
 ├── validate_dataset.py              # Dataset validation utility
+├── annotation.py                    # Annotation generation utility
 ├── data.yaml                        # Dataset configuration
 ├── requirements.txt                # Python dependencies
+├── requirements-local.txt          # Local development dependencies
 ├── vercel.json                      # Vercel deployment configuration
 ├── templates/                       # HTML templates
 │   └── index.html                  # Web interface
 ├── images/                         # Dataset images (gitignored)
-│   ├── person/                    # Person images
-│   ├── backpack/                  # Backpack images
-│   ├── toothbrush/                # Toothbrush images
+│   ├── bagpack/                   # Bagpack images
 │   ├── bottle/                    # Bottle images
+│   ├── toothbrush/                # Toothbrush images
+│   ├── person/                    # Person images
+│   ├── phone/                     # Phone images
 │   └── book/                      # Book images
 ├── custom_dataset/                 # Custom dataset structure (gitignored)
 │   ├── data.yaml                  # Dataset configuration
 │   ├── images/                    # Training/validation/test images
 │   └── labels/                    # YOLO format annotations
+├── runs/                           # Training outputs (gitignored)
+│   └── train/
+│       └── custom_model/
+│           └── weights/
+│               ├── best.pt        # Best PyTorch model
+│               └── best.onnx      # Best ONNX model
 └── .gitignore                      # Git ignore file
 ```
 
@@ -116,227 +102,34 @@ The project includes complete infrastructure for training custom YOLO models:
 
 ## Custom Classes
 
-The system is trained to detect 5 custom object classes:
-- person (ID: 0)
-- backpack (ID: 1)
+The system is trained to detect 6 custom object classes:
+- bagpack (ID: 0)
+- bottle (ID: 1)
 - toothbrush (ID: 2)
-- bottle (ID: 3)
-- book (ID: 4)
+- person (ID: 3)
+- phone (ID: 4)
+- book (ID: 5)
 
 ## Dataset Requirements
 
 For optimal training performance:
-- 150 images per class (750 total)
+- Minimum 100 images per class (600 total recommended)
 - YOLO format annotations (.txt files)
 - 70/20/10 train/validation/test split
 - Diverse lighting, angles, and backgrounds
 
-## Complete Training Process
+## Training Configuration
 
-### Step 1: Data Collection
-We collected 150 images for each of the 5 classes (person, backpack, toothbrush, bottle, book) by adding images to the images/ folder with subfolders for each class. Images were selected to ensure quality and variety in angles, lighting, and backgrounds.
-
-**Person Images (150):** Sampled from a Kaggle face dataset using random selection to ensure diversity:
-```python
-import os
-import shutil
-import random
-
-source_dir = '/kaggle/input'
-destination_dir = '/kaggle/working/images/person'
-os.makedirs(destination_dir, exist_ok=True)
-
-all_images = []
-valid_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.bmp')
-
-for dirname, _, filenames in os.walk(source_dir):
-    for filename in filenames:
-        if filename.lower().endswith(valid_extensions):
-            all_images.append(os.path.join(dirname, filename))
-
-if len(all_images) >= 150:
-    sampled_images = random.sample(all_images, 150)
-    print(f"Found {len(all_images)} images. Sampling 150 random faces...")
-else:
-    sampled_images = all_images
-    print(f"Warning: Only found {len(all_images)} images. Copying all of them.")
-
-for img_path in sampled_images:
-    shutil.copy(img_path, destination_dir)
-```
-
-**Phone Images (100):** Sourced from Datacluster Labs Phone Dataset for mobile phone detection training.
-
-### Step 2: Manual Annotation
-Each captured image was manually annotated using LabelImg to draw precise bounding boxes around the target objects. Annotations were saved in YOLO format as `.txt` files with normalized coordinates (0-1 range). Each annotation file contains:
-- Class ID (0-4 corresponding to our 5 classes)
-- Bounding box center coordinates (x, y)
-- Bounding box width and height
-
-Example annotation format:
-```
-3 0.456789 0.345678 0.234567 0.345678
-```
-Where:
-- 3 = class ID (bottle)
-- 0.456789 = center x coordinate
-- 0.345678 = center y coordinate
-- 0.234567 = width
-- 0.345678 = height
-
-### Step 3: Dataset Organization
-Images and their corresponding annotation files were organized into the following structure:
-```
-custom_dataset/
-├── data.yaml              # Dataset configuration
-├── images/
-│   ├── train/            # 525 training images (70%)
-│   ├── val/              # 150 validation images (20%)
-│   └── test/             # 75 test images (10%)
-└── labels/
-    ├── train/            # Corresponding .txt files
-    ├── val/
-    └── test/
-```
-
-The `split_dataset.py` script automatically splits the data into train/validation/test sets with a 70/20/10 ratio, ensuring balanced distribution across all classes.
-
-### Step 4: Dataset Validation
-The `validate_dataset.py` script checks for:
-- Missing annotation files
-- Invalid annotation formats
-- Proper class IDs
-- Normalized coordinate ranges
-- Balanced class distribution
-
-### Step 5: Model Training
-Training was performed using transfer learning from YOLOv8n base model with the following optimized parameters:
-
-**Training Configuration:**
+**Training Parameters:**
 - Base model: YOLOv8n (transfer learning)
 - Epochs: 200 with early stopping (patience=50)
-- Batch size: 16
+- Batch size: 16 (adjustable based on GPU)
 - Image size: 640x640
-- Learning rate: 0.001 (auto-adjusted)
+- Learning rate: 0.01 (auto-adjusted)
 - Optimizer: AdamW
 - Data augmentation: Enabled (mosaic, mixup, flip, rotate)
 - Confidence threshold: 0.25
 - IOU threshold: 0.7
-
-**Training Process:**
-1. Load YOLOv8n base model for transfer learning
-2. Initialize with custom dataset configuration (data.yaml)
-3. Train for 200 epochs with validation after each epoch
-4. Early stopping if validation loss doesn't improve for 50 epochs
-5. Save best model based on validation mAP50-95 score
-6. Generate training metrics and confusion matrix
-
-**Results:**
-- Final mAP50-95: ~0.85 (85% accuracy)
-- Training time: ~2-3 hours on GPU
-- Best model saved at: `runs/train/custom_model/weights/best.pt`
-
-### Step 6: Model Evaluation
-The trained model was evaluated on the test set using:
-- Precision, Recall, and F1-score
-- mAP50 and mAP50-95 metrics
-- Confusion matrix for class-wise performance
-- Inference time per image
-
-### Step 7: FastAPI Server Integration
-The trained model was integrated into a FastAPI server (`main.py`) for real-time inference:
-
-**Server Architecture:**
-- FastAPI web server for HTTP endpoints
-- YOLO model loaded on startup (supports both .pt and .onnx formats)
-- Image upload endpoint for inference
-- Bounding box drawing and annotation
-- JPEG response with annotated image
-- Health check and model info endpoints
-
-**Key Features:**
-- Custom class detection (5 classes)
-- ONNX model support for optimized inference
-- Automatic fallback to PyTorch if ONNX not available
-- Vercel deployment ready
-
-### Step 8: ONNX Conversion for Deployment
-For optimized deployment on cloud platforms, the model can be converted to ONNX format:
-
-**Conversion Process:**
-```bash
-python convert_to_onnx.py
-```
-
-**Benefits of ONNX:**
-- Faster inference speed
-- Cross-platform compatibility
-- Smaller model size
-- Better resource utilization
-- Optimized for CPU inference
-
-**Deployment:**
-The application is configured for Vercel deployment with:
-- Python runtime support
-- ONNX runtime for inference
-- CORS headers for client-side access
-- Automatic scaling
-
-### Step 9: Frontend Integration
-The web interface (`templates/index.html`) provides:
-- Webcam access and live preview
-- Frame capture and upload to server
-- Display of annotated detection results
-- Real-time statistics (FPS, detection count, inference time)
-- Responsive design with dark theme
-
-**Frontend-Server Communication:**
-1. Frontend captures webcam frames
-2. Converts frames to JPEG format
-3. Uploads to `/detect` endpoint via POST request
-4. Server processes image with YOLO model
-5. Returns annotated image with bounding boxes
-6. Frontend displays results in real-time
-
-### Step 9: Deployment to Vercel
-The application was deployed to Vercel with the following steps:
-
-**Deployment Configuration:**
-1. Created `vercel.json` configuration file
-2. Set up environment variables for model path
-3. Configured serverless function for API routes
-4. Optimized for cold starts and fast inference
-5. Set up custom domain and SSL
-
-**Vercel Configuration:**
-```json
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "main.py"
-    }
-  ]
-}
-```
-
-**Deployment Process:**
-1. Pushed code to GitHub repository
-2. Connected GitHub to Vercel
-3. Vercel automatically deployed on push
-4. Configured environment variables
-5. Tested live deployment
-6. Set up continuous deployment
-
-**Live URL:**
-The deployed application is accessible at the Vercel-provided domain with real-time object detection capabilities.
 
 ## Technical Architecture
 
@@ -345,6 +138,7 @@ The deployed application is accessible at the Vercel-provided domain with real-t
 - Ultralytics YOLOv8: Object detection model
 - OpenCV: Image processing
 - NumPy: Numerical operations
+- ONNX Runtime: Optimized model inference
 
 **Frontend Stack:**
 - HTML5/CSS3: User interface
@@ -352,17 +146,8 @@ The deployed application is accessible at the Vercel-provided domain with real-t
 - Fetch API: HTTP requests
 - MediaDevices API: Webcam access
 
-**Deployment Stack:**
-- Vercel: Cloud platform
-- Serverless functions: API endpoints
-- GitHub: Version control and CI/CD
-
 ## Deployment
 
-### Local Development
-Run the FastAPI server locally for testing and development.
-
-### Production Deployment
 The application can be deployed to cloud platforms with the trained model.
 
 ## Dataset Structure
@@ -373,21 +158,6 @@ Images and annotations are excluded from git (see .gitignore) for repository siz
 - YOLO format annotations
 - 70/20/10 train/validation/test split
 - Transfer learning from YOLOv8n base model
-
-## Training Configuration
-
-The training script uses optimized parameters for high accuracy:
-- Base model: YOLOv8n (transfer learning)
-- Epochs: 200 with early stopping
-- Batch size: 16 (adjustable based on GPU)
-- Image size: 640x640
-- Data augmentation enabled
-- Target accuracy: 90-95% mAP50-95
-
-## Notes
-
-- Images and datasets are gitignored for repository size management
-- Custom training pipeline uses transfer learning from YOLOv8n base model
 
 ## License
 

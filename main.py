@@ -1,7 +1,7 @@
 """
 FastAPI Application for Custom YOLO Object Detection
 Server-side implementation using locally trained custom YOLO model
-Supports custom object classes: person, backpack, toothbrush, bottle, book
+Supports custom object classes: bagpack, bottle, toothbrush, person, phone, book
 Supports both PyTorch (.pt) and ONNX (.onnx) model formats
 For deployment, uses ONNX runtime for optimal performance and size
 """
@@ -16,6 +16,10 @@ from contextlib import asynccontextmanager
 import os
 import io
 import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Try to import ML dependencies (optional for deployment)
 try:
@@ -37,7 +41,14 @@ except ImportError:
     ULTRALYTICS_AVAILABLE = False
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=getattr(logging, settings.log_level),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(settings.log_file),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # Global model variables
@@ -47,11 +58,12 @@ use_onnx = False
 
 # Custom class names for trained model
 CUSTOM_CLASSES = {
-    0: "person",
-    1: "backpack", 
+    0: "bagpack",
+    1: "bottle",
     2: "toothbrush",
-    3: "bottle",
-    4: "book"
+    3: "person",
+    4: "phone",
+    5: "book"
 }
 
 def get_class_name(class_id: int):
@@ -99,7 +111,7 @@ app = FastAPI(title="Custom YOLO Object Detector", version="1.0.0", lifespan=lif
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -140,53 +152,57 @@ def run_onnx_inference(img, onnx_session, confidence_threshold: float = 0.5):
     Run inference using ONNX model
     Returns list of detections in format: [x1, y1, x2, y2, confidence, class_id]
     """
-    # Preprocess image
-    original_shape = img.shape
-    input_shape = (640, 640)  # YOLO default input size
-    
-    # Resize and normalize
-    resized = cv2.resize(img, input_shape)
-    normalized = resized.astype(np.float32) / 255.0
-    transposed = normalized.transpose(2, 0, 1)
-    input_tensor = np.expand_dims(transposed, axis=0)
-    
-    # Get input/output names
-    input_name = onnx_session.get_inputs()[0].name
-    output_name = onnx_session.get_outputs()[0].name
-    
-    # Run inference
-    outputs = onnx_session.run([output_name], {input_name: input_tensor})
-    
-    # Process outputs (YOLO format: [batch, 4 + num_classes, num_boxes])
-    predictions = outputs[0]
-    
-    # Parse predictions
-    detections = []
-    for pred in predictions[0]:  # First batch
-        boxes = pred[:4]  # x, y, w, h
-        scores = pred[4:]
-        class_id = np.argmax(scores)
-        confidence = scores[class_id]
+    try:
+        # Preprocess image
+        original_shape = img.shape
+        input_shape = (640, 640)  # YOLO default input size
         
-        if confidence >= confidence_threshold:
-            # Convert center/width/height to x1/y1/x2/y2
-            x, y, w, h = boxes
-            x1 = x - w / 2
-            y1 = y - h / 2
-            x2 = x + w / 2
-            y2 = y + h / 2
+        # Resize and normalize
+        resized = cv2.resize(img, input_shape)
+        normalized = resized.astype(np.float32) / 255.0
+        transposed = normalized.transpose(2, 0, 1)
+        input_tensor = np.expand_dims(transposed, axis=0)
+        
+        # Get input/output names
+        input_name = onnx_session.get_inputs()[0].name
+        output_name = onnx_session.get_outputs()[0].name
+        
+        # Run inference
+        outputs = onnx_session.run([output_name], {input_name: input_tensor})
+        
+        # Process outputs (YOLO format: [batch, 4 + num_classes, num_boxes])
+        predictions = outputs[0]
+        
+        # Parse predictions
+        detections = []
+        for pred in predictions[0]:  # First batch
+            boxes = pred[:4]  # x, y, w, h
+            scores = pred[4:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
             
-            # Scale to original image size
-            scale_x = original_shape[1] / input_shape[1]
-            scale_y = original_shape[0] / input_shape[0]
-            x1 *= scale_x
-            y1 *= scale_y
-            x2 *= scale_x
-            y2 *= scale_y
-            
-            detections.append([x1, y1, x2, y2, confidence, class_id])
-    
-    return detections
+            if confidence >= confidence_threshold:
+                # Convert center/width/height to x1/y1/x2/y2
+                x, y, w, h = boxes
+                x1 = x - w / 2
+                y1 = y - h / 2
+                x2 = x + w / 2
+                y2 = y + h / 2
+                
+                # Scale to original image size
+                scale_x = original_shape[1] / input_shape[1]
+                scale_y = original_shape[0] / input_shape[0]
+                x1 *= scale_x
+                y1 *= scale_y
+                x2 *= scale_x
+                y2 *= scale_y
+                
+                detections.append([x1, y1, x2, y2, confidence, class_id])
+        
+        return detections
+    except Exception as e:
+        logger.error(f"ONNX inference error: {e}")
+        return []
 
 def draw_detections_onnx(frame, detections, confidence_threshold: float = 0.5):
     """
@@ -213,7 +229,6 @@ def draw_detections_onnx(frame, detections, confidence_threshold: float = 0.5):
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Note: Removed "async" so blocking YOLO processing runs safely in FastAPI's threadpool
 @app.post("/detect")
 def detect_objects(file: UploadFile = File(...)):
     global model, onnx_session, use_onnx
@@ -231,9 +246,18 @@ def detect_objects(file: UploadFile = File(...)):
     if model is None and onnx_session is None:
         raise HTTPException(status_code=500, detail="Model not initialized")
     
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only image files are allowed.")
+    
+    # Validate file size (max 10MB)
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    contents = file.file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
+    
     try:
         # Read uploaded image frame
-        contents = file.file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
@@ -243,12 +267,12 @@ def detect_objects(file: UploadFile = File(...)):
         # Run inference based on available model
         if use_onnx and onnx_session is not None:
             # ONNX inference
-            results = run_onnx_inference(img, onnx_session)
-            annotated_img = draw_detections_onnx(img.copy(), results)
+            results = run_onnx_inference(img, onnx_session, 0.5)
+            annotated_img = draw_detections_onnx(img.copy(), results, 0.5)
         else:
             # PyTorch inference
             results = model(img)
-            annotated_img = draw_detections(img.copy(), results)
+            annotated_img = draw_detections(img.copy(), results, 0.5)
         
         # Convert frame back to JPEG
         _, buffer = cv2.imencode('.jpg', annotated_img)

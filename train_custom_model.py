@@ -8,6 +8,7 @@ from ultralytics import YOLO
 import os
 import yaml
 from pathlib import Path
+import torch
 
 def train_custom_model():
     """
@@ -100,8 +101,8 @@ def train_custom_model():
         seed=42,  # Random seed for reproducibility
         deterministic=True,  # Deterministic training
         single_cls=False,  # Multi-class training
-        device='0',  # GPU device (use 'cpu' if no GPU)
-        workers=8,  # Data loading workers
+        device='0' if torch.cuda.is_available() else 'cpu',  # Auto-detect GPU/CPU
+        workers=8 if torch.cuda.is_available() else 4,  # Adjust workers based on device
         close_mosaic=10,  # Disable mosaic in final epochs
     )
     

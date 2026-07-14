@@ -7,11 +7,11 @@ os.makedirs(output_dir, exist_ok=True)
 # 6 sequences matching your 6 tracking targets
 sequences = [
     {"id": 0, "name": "seq1_bagpack"},
-    {"id": 1, "name": "seq2_book"},
-    {"id": 2, "name": "seq3_bottle"},
+    {"id": 1, "name": "seq2_bottle"},
+    {"id": 2, "name": "seq3_toothbrush"},
     {"id": 3, "name": "seq4_person"},
     {"id": 4, "name": "seq5_phone"},
-    {"id": 5, "name": "seq6_toothbrush"}
+    {"id": 5, "name": "seq6_book"}
 ]
 
 frames_per_sequence = 150
