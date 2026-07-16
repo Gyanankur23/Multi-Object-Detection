@@ -1,17 +1,10 @@
-"""
-Dataset Validation Script
-Validates YOLO dataset format and quality
-"""
+"""Validate YOLO dataset format"""
 
 import os
 from pathlib import Path
 from collections import defaultdict
 
 def validate_dataset(dataset_dir='custom_dataset'):
-    """
-    Validate YOLO dataset structure and quality
-    """
-    
     print("="*50)
     print("Dataset Validation")
     print("="*50)
@@ -19,7 +12,6 @@ def validate_dataset(dataset_dir='custom_dataset'):
     errors = []
     warnings = []
     
-    # Check directory structure
     print("\n1. Checking directory structure...")
     required_dirs = [
         'images/train', 'images/val', 'images/test',
@@ -39,7 +31,6 @@ def validate_dataset(dataset_dir='custom_dataset'):
             print(f"  - {error}")
         return False
     
-    # Check data.yaml
     print("\n2. Checking data.yaml...")
     data_yaml = Path(dataset_dir) / 'data.yaml'
     if not data_yaml.exists():
@@ -47,7 +38,6 @@ def validate_dataset(dataset_dir='custom_dataset'):
     else:
         print(f"  ✓ data.yaml exists")
     
-    # Check image-label pairs
     print("\n3. Checking image-label pairs...")
     for split in ['train', 'val', 'test']:
         img_dir = Path(dataset_dir) / 'images' / split
@@ -84,7 +74,6 @@ def validate_dataset(dataset_dir='custom_dataset'):
         if not missing_labels and not orphan_labels:
             print(f"  ✓ {split}: All images have matching labels")
     
-    # Check label format
     print("\n4. Checking label format...")
     class_counts = defaultdict(int)
     invalid_labels = []
@@ -113,7 +102,6 @@ def validate_dataset(dataset_dir='custom_dataset'):
                             invalid_labels.append(f"{label_file.name}:{line_num} - Invalid class ID: {class_id}")
                             continue
                         
-                        # Check if coordinates are normalized (0-1)
                         for i in range(1, 5):
                             val = float(parts[i])
                             if val < 0 or val > 1:
@@ -130,25 +118,22 @@ def validate_dataset(dataset_dir='custom_dataset'):
     else:
         print(f"  ✓ All labels have valid format")
     
-    # Class distribution
     print("\n5. Class distribution:")
     class_names = ['bagpack', 'bottle', 'toothbrush', 'person', 'phone', 'book']
     for class_id in range(6):
         count = class_counts.get(class_id, 0)
         print(f"  {class_names[class_id]} (ID {class_id}): {count} annotations")
     
-    # Check for class imbalance
     if class_counts:
         max_count = max(class_counts.values())
         min_count = min(class_counts.values())
         imbalance_ratio = max_count / min_count if min_count > 0 else float('inf')
         
         if imbalance_ratio > 2:
-            warnings.append(f"Class imbalance detected (ratio: {imbalance_ratio:.2f})")
+            warnings.append(f"Class imbalance (ratio: {imbalance_ratio:.2f})")
         else:
             print(f"  ✓ Class distribution is balanced")
     
-    # Summary
     print("\n" + "="*50)
     print("Validation Summary")
     print("="*50)
@@ -164,13 +149,13 @@ def validate_dataset(dataset_dir='custom_dataset'):
             print(f"  - {warning}")
     
     if not errors and not warnings:
-        print("✓ Dataset is valid and ready for training!")
+        print("✓ Dataset is valid!")
         return True
     elif not errors:
-        print("⚠ Dataset has warnings but can be used for training")
+        print("⚠ Dataset has warnings but can be used")
         return True
     else:
-        print("❌ Dataset has errors that must be fixed before training")
+        print("❌ Fix errors before training")
         return False
 
 if __name__ == "__main__":
@@ -181,4 +166,4 @@ if __name__ == "__main__":
         print("1. Review warnings if any")
         print("2. Run training: python train_custom_model.py")
     else:
-        print("\nPlease fix the errors before training")
+        print("\nFix errors before training")

@@ -2,22 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so    
+*.so
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
 *.egg
 
 # Virtual Environment
@@ -30,7 +19,6 @@ ENV/
 .idea/
 *.swp
 *.swo
-*~
 
 # YOLO/Ultralytics
 runs/
@@ -38,13 +26,11 @@ datasets/
 *.pt
 *.onnx
 
-# Exception: Allow the trained ONNX model for Docker deployment
+# Exceptions for deployment
 !runs/train/custom_model/weights/best.onnx
-
-# Exception: Allow custom dataset labels for training
 !custom_dataset_labels/
 
-# Dataset
+# Dataset folders
 dataset/
 raw_images/
 raw_labels/
@@ -61,7 +47,6 @@ book_images/
 book_labels/
 mobile_phone_images/
 mobile_phone_labels/
-custom_dataset_labels/
 
 # Test outputs
 test_results/
@@ -79,5 +64,4 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
-
 .vercel

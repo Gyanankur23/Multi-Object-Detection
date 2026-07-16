@@ -1,7 +1,4 @@
-"""
-Dataset Split Script
-Splits dataset into train (70%), val (20%), test (10%) with class balance
-"""
+"""Split dataset into train/val/test sets"""
 
 import os
 import shutil
@@ -18,19 +15,12 @@ def split_dataset(
     test_ratio=0.1,
     seed=42
 ):
-    """
-    Split dataset into train/val/test sets with balanced class distribution
-    """
-    
-    # Set random seed for reproducibility
     random.seed(seed)
     
-    # Create output directories
     for split in ['train', 'val', 'test']:
         os.makedirs(f"{output_dir}/images/{split}", exist_ok=True)
         os.makedirs(f"{output_dir}/labels/{split}", exist_ok=True)
     
-    # Get all image files
     image_files = list(Path(source_images_dir).glob('*'))
     image_files = [f for f in image_files if f.suffix in ['.jpg', '.jpeg', '.png', '.bmp']]
     
@@ -40,17 +30,15 @@ def split_dataset(
     
     print(f"Found {len(image_files)} images")
     
-    # Group images by class (from labels)
     class_images = defaultdict(list)
     
     for img_file in image_files:
         label_file = Path(source_labels_dir) / f"{img_file.stem}.txt"
         
         if not label_file.exists():
-            print(f"Warning: No label file for {img_file.name}, skipping")
+            print(f"Warning: No label for {img_file.name}, skipping")
             continue
         
-        # Read label file to get classes
         with open(label_file, 'r') as f:
             classes = set()
             for line in f:
@@ -58,7 +46,6 @@ def split_dataset(
                     class_id = int(line.split()[0])
                     classes.add(class_id)
             
-            # Assign to first class (for simplicity)
             if classes:
                 primary_class = min(classes)
                 class_images[primary_class].append(img_file)
@@ -67,7 +54,6 @@ def split_dataset(
     for class_id, files in sorted(class_images.items()):
         print(f"  Class {class_id}: {len(files)} images")
     
-    # Split each class separately to maintain balance
     train_files = []
     val_files = []
     test_files = []
@@ -83,14 +69,11 @@ def split_dataset(
         val_files.extend(files[n_train:n_train + n_val])
         test_files.extend(files[n_train + n_val:])
     
-    # Copy files to respective directories
     def copy_files(files, split):
         for img_file in files:
-            # Copy image
             dst_img = Path(output_dir) / "images" / split / img_file.name
             shutil.copy2(img_file, dst_img)
             
-            # Copy label
             label_file = Path(source_labels_dir) / f"{img_file.stem}.txt"
             if label_file.exists():
                 dst_label = Path(output_dir) / "labels" / split / label_file.name
@@ -106,7 +89,6 @@ def split_dataset(
     print(f"  Val: {len(val_files)} images ({len(val_files)/len(image_files)*100:.1f}%)")
     print(f"  Test: {len(test_files)} images ({len(test_files)/len(image_files)*100:.1f}%)")
     
-    # Verify split
     print(f"\nVerifying split...")
     for split in ['train', 'val', 'test']:
         img_dir = Path(output_dir) / "images" / split
@@ -118,28 +100,26 @@ def split_dataset(
         print(f"  {split}: {n_images} images, {n_labels} labels")
         
         if n_images != n_labels:
-            print(f"  Warning: Mismatch between images and labels in {split}")
+            print(f"  Warning: Mismatch in {split}")
 
 if __name__ == "__main__":
     print("="*50)
     print("Dataset Split Script")
     print("="*50)
     
-    # Check if source directories exist
     source_images = "custom_dataset/images"
     source_labels = "custom_dataset/labels"
     
     if not os.path.exists(source_images):
         print(f"Error: {source_images} not found!")
-        print("Please place your images in custom_dataset/images/")
+        print("Place images in custom_dataset/images/")
         exit(1)
     
     if not os.path.exists(source_labels):
         print(f"Error: {source_labels} not found!")
-        print("Please place your labels in custom_dataset/labels/")
+        print("Place labels in custom_dataset/labels/")
         exit(1)
     
-    # Run split
     split_dataset(
         source_images_dir=source_images,
         source_labels_dir=source_labels,
@@ -150,5 +130,5 @@ if __name__ == "__main__":
         seed=42
     )
     
-    print("\n✓ Dataset split completed successfully!")
-    print("You can now run: python train_custom_model.py")
+    print("\n✓ Split completed!")
+    print("Run: python train_custom_model.py")
