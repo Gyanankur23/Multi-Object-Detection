@@ -18,7 +18,11 @@ import io
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
 
 # Try to import ML dependencies (optional for deployment)
@@ -39,17 +43,6 @@ try:
     ULTRALYTICS_AVAILABLE = True
 except ImportError:
     ULTRALYTICS_AVAILABLE = False
-
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(settings.log_file),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
 
 # Global model variables
 model = None
@@ -77,15 +70,25 @@ async def lifespan(app: FastAPI):
     
     # Try to load ONNX model first (preferred for deployment)
     if os.path.exists('runs/train/custom_model/weights/best.onnx'):
-        logger.info("Loading ONNX model for optimized inference...")
-        onnx_session = ort.InferenceSession('runs/train/custom_model/weights/best.onnx', providers=['CPUExecutionProvider'])
-        use_onnx = True
-        logger.info("ONNX model loaded successfully.")
+        try:
+            logger.info("Loading ONNX model for optimized inference...")
+            onnx_session = ort.InferenceSession('runs/train/custom_model/weights/best.onnx', providers=['CPUExecutionProvider'])
+            use_onnx = True
+            logger.info("ONNX model loaded successfully.")
+        except Exception as e:
+            logger.warning(f"Failed to load ONNX model: {e}. Falling back to alternative.")
+            onnx_session = None
+            use_onnx = False
     elif os.path.exists('yolov8n.onnx'):
-        logger.info("Loading base ONNX model...")
-        onnx_session = ort.InferenceSession('yolov8n.onnx', providers=['CPUExecutionProvider'])
-        use_onnx = True
-        logger.info("ONNX model loaded successfully.")
+        try:
+            logger.info("Loading base ONNX model...")
+            onnx_session = ort.InferenceSession('yolov8n.onnx', providers=['CPUExecutionProvider'])
+            use_onnx = True
+            logger.info("ONNX model loaded successfully.")
+        except Exception as e:
+            logger.warning(f"Failed to load base ONNX model: {e}.")
+            onnx_session = None
+            use_onnx = False
     # Fall back to PyTorch models (only if ultralytics is available)
     elif ULTRALYTICS_AVAILABLE:
         if os.path.exists('runs/train/custom_model/weights/best.pt'):
@@ -98,9 +101,9 @@ async def lifespan(app: FastAPI):
             logger.info("No model found, downloading base model...")
             model = YOLO('yolov8n.pt')
     else:
-        logger.warning("No ONNX model found and ultralytics not available. Please provide an ONNX model for deployment.")
+        logger.warning("No ONNX model found and ultralytics not available. Application will run in demo mode.")
     
-    logger.info("Model loaded successfully.")
+    logger.info("Application startup complete.")
     yield
     # Clean up resources here if needed
     logger.info("Shutting down application...")
@@ -288,7 +291,7 @@ def detect_objects(file: UploadFile = File(...)):
 async def health_check():
     return {
         "status": "healthy",
-        "model_loaded": model is not None
+        "model_loaded": model is not None or onnx_session is not None
     }
 
 
@@ -297,9 +300,9 @@ async def model_info():
     """
     Get model information
     """
-    global model
+    global model, onnx_session
     
-    if model is None:
+    if model is None and onnx_session is None:
         logger.warning("Model not loaded")
         return {
             "model_type": "Not loaded",
@@ -307,18 +310,18 @@ async def model_info():
         }
     
     # Check if custom model is loaded
-    if os.path.exists('runs/train/custom_model/weights/best.pt'):
+    if os.path.exists('runs/train/custom_model/weights/best.pt') or os.path.exists('runs/train/custom_model/weights/best.onnx'):
         return {
             "model_type": "Custom trained YOLO model",
-            "model_path": "runs/train/custom_model/weights/best.pt",
+            "model_path": "runs/train/custom_model/weights/best.pt or .onnx",
             "classes": CUSTOM_CLASSES,
             "num_classes": len(CUSTOM_CLASSES),
-            "description": "Custom object detection for 5 classes: person, backpack, toothbrush, bottle, book"
+            "description": "Custom object detection for 6 classes: bagpack, bottle, toothbrush, person, phone, book"
         }
     else:
         return {
             "model_type": "Base YOLOv8n model (for transfer learning)",
-            "model_path": "yolov8n.pt",
+            "model_path": "yolov8n.pt or yolov8n.onnx",
             "classes": CUSTOM_CLASSES,
             "num_classes": len(CUSTOM_CLASSES),
             "description": "Base model for transfer learning on custom dataset"
@@ -327,4 +330,4 @@ async def model_info():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=settings.host, port=settings.port)

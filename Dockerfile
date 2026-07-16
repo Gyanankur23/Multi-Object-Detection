@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -15,16 +15,17 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for caching
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies including latest ONNX runtime
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY main.py .
-COPY convert_to_onnx.py .
+COPY data.yaml .
 COPY templates/ ./templates/
+COPY runs/train/custom_model/weights/best.onnx ./runs/train/custom_model/weights/best.onnx
 
 # Create necessary directories
-RUN mkdir -p models static runs
+RUN mkdir -p runs/train/custom_model/weights static
 
 # Expose port
 EXPOSE 8000

@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+*.so    
 .Python
 build/
 develop-eggs/
@@ -37,6 +37,9 @@ runs/
 datasets/
 *.pt
 *.onnx
+
+# Exception: Allow the trained ONNX model for Docker deployment
+!runs/train/custom_model/weights/best.onnx
 
 # Dataset
 dataset/
