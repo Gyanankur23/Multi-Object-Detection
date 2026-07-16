@@ -5,11 +5,15 @@ import os
 import yaml
 from pathlib import Path
 import torch
+from ultralytics.utils import SETTINGS
+
+# Override Ultralytics dataset directory
+SETTINGS['datasets_dir'] = Path(os.getcwd())
 
 def train_custom_model():
     config = {
         'data': 'custom_dataset/data.yaml',
-        'epochs': 200,
+        'epochs': 10,  # Reduced for faster training
         'batch': 16,
         'imgsz': 640,
         'patience': 50,
