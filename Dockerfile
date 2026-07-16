@@ -22,7 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 COPY data.yaml .
 COPY templates/ ./templates/
-COPY runs/train/custom_model/weights/best.onnx ./runs/train/custom_model/weights/best.onnx
 
 # Create necessary directories
 RUN mkdir -p runs/train/custom_model/weights static
