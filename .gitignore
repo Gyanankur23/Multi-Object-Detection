@@ -41,6 +41,9 @@ datasets/
 # Exception: Allow the trained ONNX model for Docker deployment
 !runs/train/custom_model/weights/best.onnx
 
+# Exception: Allow custom dataset labels for training
+!custom_dataset_labels/
+
 # Dataset
 dataset/
 raw_images/
