@@ -1,4 +1,5 @@
 # Custom YOLO Dataset Configuration
+# Objects for detection
 # Classes: bagpack, bottle, toothbrush, person, phone, book
 
 path: custom_dataset  # dataset root dir
