@@ -13,7 +13,7 @@ SETTINGS['datasets_dir'] = Path(os.getcwd())
 def train_custom_model():
     config = {
         'data': 'custom_dataset/data.yaml',
-        'epochs': 10,  # Reduced for faster training
+        'epochs': 200,  # Full training for production
         'batch': 16,
         'imgsz': 640,
         'patience': 50,
