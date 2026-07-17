@@ -285,8 +285,8 @@
             </div>
 
             <div class="video-container">
-                <video id="videoElement" autoplay playsinline muted></video>
-                <canvas id="canvas"></canvas>
+                <video id="videoElement" autoplay playsinline muted style="display:none;"></video>
+                <img id="videoFeed" src="" alt="Video feed">
             </div>
 
             <div class="controls">
@@ -320,117 +320,109 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
     <script>
         // Global variables
-        let model = null;
         let isStreaming = false;
         let videoElement = null;
-        let canvas = null;
-        let ctx = null;
         let animationFrameId = null;
         let lastFrameTime = 0;
         let frameCount = 0;
         let fps = 0;
+        
+        // Server URL - Use current origin for local development
+        const BASE_URL = window.location.origin;
 
-        // Initialize TensorFlow.js COCO-SSD model
+        // Initialize
         async function initModel() {
             const status = document.getElementById('status');
             const startBtn = document.getElementById('startBtn');
             
             try {
                 status.className = 'status loading';
-                status.textContent = 'Loading custom trained model...';
+                status.textContent = 'Loading custom YOLO model...';
                 
-                // Load COCO-SSD model (pre-trained, no conversion needed)
-                model = await cocoSsd.load();
-                
-                status.className = 'status inactive';
-                status.textContent = 'Model loaded - Ready to start camera';
-                startBtn.disabled = false;
-                
-                console.log('Model loaded successfully');
+                // Check server health
+                const response = await fetch(`${BASE_URL}/health`);
+                if (response.ok) {
+                    status.className = 'status inactive';
+                    status.textContent = 'Custom YOLO model loaded - Ready to start camera';
+                    startBtn.disabled = false;
+                } else {
+                    throw new Error('Server not responding');
+                }
             } catch (error) {
-                console.error('Error loading model:', error);
+                console.error('Error connecting to server:', error);
                 status.className = 'status inactive';
-                status.textContent = 'Error loading model: ' + error.message;
+                status.textContent = 'Error connecting to server: ' + error.message;
             }
         }
 
-        // Draw detections
-        function drawDetections(predictions) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            predictions.forEach(prediction => {
-                const [x, y, width, height] = prediction.bbox;
-                const label = `${prediction.class}: ${(prediction.score * 100).toFixed(1)}%`;
-                
-                // Draw box with green color
-                ctx.strokeStyle = '#00ff88';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, width, height);
-                
-                // Draw label background
-                ctx.font = 'bold 13px Inter, sans-serif';
-                const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = '#0d2a1a';
-                ctx.fillRect(x, y - 20, textWidth + 10, 20);
-                
-                // Draw label text
-                ctx.fillStyle = '#00ff88';
-                ctx.fillText(label, x + 5, y - 6);
-            });
-        }
-
-        // Update detection list UI
-        function updateDetectionList(predictions) {
-            const list = document.getElementById('detectionList');
-            list.innerHTML = '';
-            
-            predictions.forEach(pred => {
-                const item = document.createElement('div');
-                item.className = 'detection-item';
-                item.innerHTML = `
-                    <span>${pred.class}</span>
-                    <span class="confidence">${(pred.score * 100).toFixed(1)}%</span>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        // Process frame
+        // Process frame with server-side detection
         async function processFrame() {
-            if (!isStreaming || !model) return;
+            if (!isStreaming) return;
             
-            const startTime = performance.now();
+            const videoElement = document.getElementById('videoElement');
+            const videoFeed = document.getElementById('videoFeed');
             
-            // Run detection
-            const predictions = await model.detect(videoElement);
-            
-            // Draw detections
-            drawDetections(predictions);
-            
-            // Update UI
-            const endTime = performance.now();
-            const inferenceTime = endTime - startTime;
-            
-            document.getElementById('inferenceTime').textContent = `${inferenceTime.toFixed(1)}ms`;
-            document.getElementById('detectionCount').textContent = predictions.length;
-            updateDetectionList(predictions);
-            
-            // Calculate FPS
-            frameCount++;
-            const now = performance.now();
-            if (now - lastFrameTime >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                lastFrameTime = now;
-                document.getElementById('fps').textContent = fps;
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                const startTime = performance.now();
+                
+                // Draw current frame to canvas
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = videoElement.videoWidth;
+                tempCanvas.height = videoElement.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Convert to blob for detection
+                tempCanvas.toBlob(async (blob) => {
+                    if (!blob || !isStreaming) return;
+                    
+                    const formData = new FormData();
+                    formData.append('file', blob, 'frame.jpg');
+                    
+                    try {
+                        const response = await fetch(`${BASE_URL}/detect`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const imageBlob = await response.blob();
+                            
+                            // Display annotated frame
+                            if (videoFeed.src.startsWith('blob:')) {
+                                URL.revokeObjectURL(videoFeed.src);
+                            }
+                            videoFeed.src = URL.createObjectURL(imageBlob);
+                            
+                            // Update stats
+                            const endTime = performance.now();
+                            const inferenceTime = endTime - startTime;
+                            
+                            document.getElementById('inferenceTime').textContent = `${inferenceTime.toFixed(1)}ms`;
+                            
+                            // Calculate FPS
+                            frameCount++;
+                            const now = performance.now();
+                            if (now - lastFrameTime >= 1000) {
+                                fps = frameCount;
+                                frameCount = 0;
+                                lastFrameTime = now;
+                                document.getElementById('fps').textContent = fps;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Frame upload error:", error);
+                    }
+                    
+                    if (isStreaming) {
+                        animationFrameId = requestAnimationFrame(processFrame);
+                    }
+                }, 'image/jpeg', 0.7);
+            } else {
+                setTimeout(processFrame, 100);
             }
-            
-            // Continue processing
-            animationFrameId = requestAnimationFrame(processFrame);
         }
 
         // Start camera
@@ -438,8 +430,6 @@
             if (isStreaming) return;
             
             videoElement = document.getElementById('videoElement');
-            canvas = document.getElementById('canvas');
-            ctx = canvas.getContext('2d');
             const status = document.getElementById('status');
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -449,35 +439,22 @@
                     video: {
                         width: { ideal: 640 },
                         height: { ideal: 480 },
-                        frameRate: { ideal: 30 }
+                        frameRate: { ideal: 15 }
                     }
                 });
                 
                 videoElement.srcObject = stream;
                 await videoElement.play();
                 
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-                
                 isStreaming = true;
                 status.className = 'status active';
-                status.textContent = 'Camera active - Tracking objects...';
+                status.textContent = 'Camera active - Detecting objects with custom YOLO model...';
                 startBtn.disabled = true;
                 stopBtn.disabled = false;
                 
-                // Start processing loop
+                // Start processing
                 lastFrameTime = performance.now();
                 frameCount = 0;
-                
-                // Draw video frames to canvas
-                function drawVideoToCanvas() {
-                    if (!isStreaming) return;
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    requestAnimationFrame(drawVideoToCanvas);
-                }
-                drawVideoToCanvas();
-                
-                // Start detection
                 processFrame();
                 
             } catch (error) {
@@ -507,16 +484,17 @@
             const status = document.getElementById('status');
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
+            const videoFeed = document.getElementById('videoFeed');
             
             status.className = 'status inactive';
             status.textContent = 'Camera inactive';
             startBtn.disabled = false;
             stopBtn.disabled = true;
             
-            // Clear canvas
-            if (ctx) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (videoFeed.src.startsWith('blob:')) {
+                URL.revokeObjectURL(videoFeed.src);
             }
+            videoFeed.src = '';
             
             // Reset stats
             document.getElementById('fps').textContent = '0';
