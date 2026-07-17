@@ -27,7 +27,7 @@ datasets/
 *.onnx
 
 # Exceptions for deployment
-!runs/train/custom_model/weights/best.onnx
+!runs/train/custom_model/
 !custom_dataset_labels/
 
 # Dataset folders
