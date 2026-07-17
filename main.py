@@ -166,10 +166,33 @@ def detect_objects(file: UploadFile = File(...)):
     global model, onnx_session, use_onnx
     
     if not ML_DEPENDENCIES_AVAILABLE:
-        return JSONResponse(status_code=503, content={"error": "ML dependencies not available"})
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": "ML dependencies not available",
+                "message": "This deployment is running in minimal mode. Install cv2, numpy, and onnxruntime for full object detection capabilities."
+            }
+        )
     
     if model is None and onnx_session is None:
-        raise HTTPException(status_code=500, detail="Model not loaded")
+        logger.warning("Model not loaded - attempting to load")
+        # Try to load model on-demand
+        if os.path.exists('runs/train/custom_model/weights/best.onnx'):
+            try:
+                onnx_session = ort.InferenceSession('runs/train/custom_model/weights/best.onnx', providers=['CPUExecutionProvider'])
+                use_onnx = True
+                logger.info("ONNX model loaded on-demand")
+            except Exception as e:
+                logger.warning(f"ONNX load failed: {e}")
+        elif ULTRALYTICS_AVAILABLE and os.path.exists('runs/train/custom_model/weights/best.pt'):
+            try:
+                model = YOLO('runs/train/custom_model/weights/best.pt')
+                logger.info("YOLO model loaded on-demand")
+            except Exception as e:
+                logger.warning(f"YOLO load failed: {e}")
+        
+        if model is None and onnx_session is None:
+            raise HTTPException(status_code=500, detail="Model not available - please ensure model files exist")
     
     if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Invalid file type")
@@ -206,7 +229,9 @@ def detect_objects(file: UploadFile = File(...)):
 async def health_check():
     return {
         "status": "healthy",
-        "model_loaded": model is not None or onnx_session is not None
+        "model_loaded": model is not None or onnx_session is not None,
+        "ml_dependencies": ML_DEPENDENCIES_AVAILABLE,
+        "ultralytics_available": ULTRALYTICS_AVAILABLE
     }
 
 
