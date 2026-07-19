@@ -381,7 +381,7 @@ This project was built with the combined team effort of:
 *   **Huzeafa Khan**  - [@huzaifa07442](https://github.com/huzaifa07442)
 *   **Hritik Poojari** - [@hrit02](https://github.com/hrit02)
 *   **Mansoor Ali** - [@MansoorAli93](https://github.com/MansoorAli93)
-*   **Rehaan Khan** - [@RehaanKhan](https://github.com/RehaanKhan)
+*   **Rehaan Khan** - [@rehaankhan150906-crypto](https://github.com/rehaankhan150906-crypto)
 
 ## Contribute to Repository
 
