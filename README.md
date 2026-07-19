@@ -377,11 +377,11 @@ This project uses:
 
 This project was built with the combined team effort of:
 
-*   **Gyanankur Baruah** - [@Gyanankur23](https://github.com)
-*   **Huzeafa Khan**
-*   **Hritik Poojari** - [@hrit06](https://github.com)
-*   **Mansoor Ali**
-*   **Rehaan Khan**
+*   **Gyanankur Baruah** - [@Gyanankur23](https://github.com/Gyanankur23)
+*   **Huzeafa Khan**  - [@HuzeafaKhan07442](https://github.com/HuzeafaKhan07442)
+*   **Hritik Poojari** - [@hrit02](https://github.com/hrit02)
+*   **Mansoor Ali** - [@MansoorAli93](https://github.com/MansoorAli93)
+*   **Rehaan Khan** - [@RehaanKhan](https://github.com/RehaanKhan)
 
 ## Contribute to Repository
 
