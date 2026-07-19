@@ -268,7 +268,7 @@
     <div class="container">
         <header>
             <h1>Multi Object Webcam Video Detection</h1>
-            <p>Real-time object detection using custom YOLO model</p>
+            <p>Real-time object detection with server-side ONNX inference</p>
             <div class="objects-grid">
                 <div class="object-tag">Backpack</div>
                 <div class="object-tag">Bottle</div>
@@ -281,16 +281,16 @@
 
         <div class="content">
             <div class="status inactive" id="status">
-                Model loading...
+                Ready to start camera
             </div>
 
             <div class="video-container">
-                <video id="videoElement" autoplay playsinline muted></video>
+                <video id="videoElement" autoplay playsinline muted style="display: none;"></video>
                 <canvas id="canvas"></canvas>
             </div>
 
             <div class="controls">
-                <button class="btn-primary" id="startBtn" onclick="startCamera()" disabled>
+                <button class="btn-primary" id="startBtn" onclick="startCamera()">
                     Start Camera
                 </button>
                 <button class="btn-secondary" id="stopBtn" onclick="stopCamera()" disabled>
@@ -304,27 +304,37 @@
                     <p id="fps">0</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Detections</h3>
-                    <p id="detectionCount">0</p>
-                </div>
-                <div class="stat-card">
                     <h3>Inference Time</h3>
                     <p id="inferenceTime">0ms</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Server Status</h3>
+                    <p id="serverStatus">Checking...</p>
                 </div>
             </div>
 
             <div class="detection-list">
-                <h3>Detected Objects</h3>
-                <div id="detectionList"></div>
+                <h3>Server-Side Detection Info</h3>
+                <div id="detectionList">
+                    <div class="detection-item">
+                        <span>Model Type</span>
+                        <span class="confidence">Custom YOLOv8</span>
+                    </div>
+                    <div class="detection-item">
+                        <span>Inference Engine</span>
+                        <span class="confidence">ONNX Runtime</span>
+                    </div>
+                    <div class="detection-item">
+                        <span>Rendering</span>
+                        <span class="confidence">Server-Side</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
     <script>
         // Global variables
-        let model = null;
         let isStreaming = false;
         let videoElement = null;
         let canvas = null;
@@ -333,104 +343,86 @@
         let lastFrameTime = 0;
         let frameCount = 0;
         let fps = 0;
+        let lastInferenceTime = 0;
 
-        // Initialize TensorFlow.js COCO-SSD model
-        async function initModel() {
-            const status = document.getElementById('status');
-            const startBtn = document.getElementById('startBtn');
-            
+        // Check server health
+        async function checkServerHealth() {
+            const serverStatus = document.getElementById('serverStatus');
             try {
-                status.className = 'status loading';
-                status.textContent = 'Loading custom trained model...';
-                
-                // Load COCO-SSD model (pre-trained, no conversion needed)
-                model = await cocoSsd.load();
-                
-                status.className = 'status inactive';
-                status.textContent = 'Model loaded - Ready to start camera';
-                startBtn.disabled = false;
-                
-                console.log('Model loaded successfully');
+                const response = await fetch('/health');
+                const data = await response.json();
+                if (data.status === 'healthy') {
+                    serverStatus.textContent = 'Online';
+                    serverStatus.style.color = '#00ff88';
+                } else {
+                    serverStatus.textContent = 'Degraded';
+                    serverStatus.style.color = '#ffaa00';
+                }
             } catch (error) {
-                console.error('Error loading model:', error);
-                status.className = 'status inactive';
-                status.textContent = 'Error loading model: ' + error.message;
+                serverStatus.textContent = 'Offline';
+                serverStatus.style.color = '#ff4444';
             }
         }
 
-        // Draw detections
-        function drawDetections(predictions) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            predictions.forEach(prediction => {
-                const [x, y, width, height] = prediction.bbox;
-                const label = `${prediction.class}: ${(prediction.score * 100).toFixed(1)}%`;
-                
-                // Draw box with green color
-                ctx.strokeStyle = '#00ff88';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, width, height);
-                
-                // Draw label background
-                ctx.font = 'bold 13px Inter, sans-serif';
-                const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = '#0d2a1a';
-                ctx.fillRect(x, y - 20, textWidth + 10, 20);
-                
-                // Draw label text
-                ctx.fillStyle = '#00ff88';
-                ctx.fillText(label, x + 5, y - 6);
-            });
-        }
-
-        // Update detection list UI
-        function updateDetectionList(predictions) {
-            const list = document.getElementById('detectionList');
-            list.innerHTML = '';
-            
-            predictions.forEach(pred => {
-                const item = document.createElement('div');
-                item.className = 'detection-item';
-                item.innerHTML = `
-                    <span>${pred.class}</span>
-                    <span class="confidence">${(pred.score * 100).toFixed(1)}%</span>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        // Process frame
-        async function processFrame() {
-            if (!isStreaming || !model) return;
+        // Capture frame and send to backend
+        async function sendFrameToBackend() {
+            if (!isStreaming) return;
             
             const startTime = performance.now();
             
-            // Run detection
-            const predictions = await model.detect(videoElement);
-            
-            // Draw detections
-            drawDetections(predictions);
-            
-            // Update UI
-            const endTime = performance.now();
-            const inferenceTime = endTime - startTime;
-            
-            document.getElementById('inferenceTime').textContent = `${inferenceTime.toFixed(1)}ms`;
-            document.getElementById('detectionCount').textContent = predictions.length;
-            updateDetectionList(predictions);
-            
-            // Calculate FPS
-            frameCount++;
-            const now = performance.now();
-            if (now - lastFrameTime >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                lastFrameTime = now;
-                document.getElementById('fps').textContent = fps;
+            try {
+                // Draw video frame to canvas
+                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                
+                // Convert canvas to blob
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+                
+                // Send to backend
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const imageBlob = await response.blob();
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    
+                    // Display annotated image from server
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        URL.revokeObjectURL(imageUrl);
+                    };
+                    img.src = imageUrl;
+                }
+                
+                // Update stats
+                const endTime = performance.now();
+                const inferenceTime = endTime - startTime;
+                lastInferenceTime = inferenceTime;
+                document.getElementById('inferenceTime').textContent = `${inferenceTime.toFixed(0)}ms`;
+                
+                // Calculate FPS
+                frameCount++;
+                const now = performance.now();
+                if (now - lastFrameTime >= 1000) {
+                    fps = frameCount;
+                    frameCount = 0;
+                    lastFrameTime = now;
+                    document.getElementById('fps').textContent = fps;
+                }
+                
+            } catch (error) {
+                console.error('Error sending frame to backend:', error);
             }
             
             // Continue processing
-            animationFrameId = requestAnimationFrame(processFrame);
+            if (isStreaming) {
+                animationFrameId = requestAnimationFrame(sendFrameToBackend);
+            }
         }
 
         // Start camera
@@ -456,12 +448,12 @@
                 videoElement.srcObject = stream;
                 await videoElement.play();
                 
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
+                canvas.width = 640;
+                canvas.height = 480;
                 
                 isStreaming = true;
                 status.className = 'status active';
-                status.textContent = 'Camera active - Tracking objects...';
+                status.textContent = 'Camera active - Server-side detection running...';
                 startBtn.disabled = true;
                 stopBtn.disabled = false;
                 
@@ -469,16 +461,8 @@
                 lastFrameTime = performance.now();
                 frameCount = 0;
                 
-                // Draw video frames to canvas
-                function drawVideoToCanvas() {
-                    if (!isStreaming) return;
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    requestAnimationFrame(drawVideoToCanvas);
-                }
-                drawVideoToCanvas();
-                
-                // Start detection
-                processFrame();
+                // Start server-side detection
+                sendFrameToBackend();
                 
             } catch (error) {
                 console.error('Error accessing camera:', error);
@@ -520,13 +504,14 @@
             
             // Reset stats
             document.getElementById('fps').textContent = '0';
-            document.getElementById('detectionCount').textContent = '0';
             document.getElementById('inferenceTime').textContent = '0ms';
-            document.getElementById('detectionList').innerHTML = '';
         }
 
         // Initialize on load
-        window.addEventListener('load', initModel);
+        window.addEventListener('load', () => {
+            checkServerHealth();
+            setInterval(checkServerHealth, 5000); // Check every 5 seconds
+        });
     </script>
 </body>
 </html>
