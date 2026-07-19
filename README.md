@@ -378,7 +378,7 @@ This project uses:
 This project was built with the combined team effort of:
 
 *   **Gyanankur Baruah** - [@Gyanankur23](https://github.com/Gyanankur23)
-*   **Huzeafa Khan**  - [@HuzeafaKhan07442](https://github.com/HuzeafaKhan07442)
+*   **Huzeafa Khan**  - [@huzaifa07442](https://github.com/huzaifa07442)
 *   **Hritik Poojari** - [@hrit02](https://github.com/hrit02)
 *   **Mansoor Ali** - [@MansoorAli93](https://github.com/MansoorAli93)
 *   **Rehaan Khan** - [@RehaanKhan](https://github.com/RehaanKhan)
