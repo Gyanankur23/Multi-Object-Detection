@@ -1,16 +1,16 @@
-# 🚀 Multi-Object Detection System
+# Multi-Object Detection System
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-green)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-8.1.0-orange)
 ![ONNX](https://img.shields.io/badge/ONNX-1.17%2B-purple)
-![License](https://img.shields.io/badge/License-AGPL--3.0-red)
+![License](https://img.shields.io/badge/License-Apache--2.0-blue)
 
 **Production-grade real-time object detection system with end-to-end custom model training pipeline. Server-side rendering architecture with ONNX-optimized inference for maximum performance.**
 
 ---
 
-## 🎯 System Overview
+## System Overview
 
 This is a **complete, production-ready object detection framework** that demonstrates advanced computer vision engineering:
 
@@ -23,7 +23,7 @@ This is a **complete, production-ready object detection framework** that demonst
 
 ---
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 ### Server-Side Rendering Pipeline
 
@@ -121,7 +121,7 @@ Access web interface: http://localhost:8000
 
 ---
 
-## 🎯 Custom Object Classes
+## Custom Object Classes
 
 | Class ID | Class Name | Description |
 |----------|------------|-------------|
@@ -134,7 +134,7 @@ Access web interface: http://localhost:8000
 
 ---
 
-## 🔧 Training Configuration
+## Training Configuration
 
 **Hyperparameters:**
 - **Base Model**: YOLOv8n (transfer learning)
@@ -155,7 +155,7 @@ Access web interface: http://localhost:8000
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 ### Backend
 - **FastAPI**: High-performance async web framework
@@ -177,7 +177,7 @@ Access web interface: http://localhost:8000
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 multi-object-detection/
@@ -214,7 +214,7 @@ multi-object-detection/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Local Development
 ```bash
@@ -242,7 +242,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 🎨 API Endpoints
+## API Endpoints
 
 ### `POST /detect`
 **Description**: Real-time object detection on uploaded image
@@ -288,7 +288,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 **Inference Performance:**
 - **ONNX Model**: ~50ms per frame (640x640)
@@ -302,7 +302,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 - **Input Validation**: File type and size validation
 - **Rate Limiting**: API endpoint protection
@@ -312,7 +312,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 📝 Dataset Requirements
+## Dataset Requirements
 
 **Minimum Requirements:**
 - 100 images per class (600 total recommended)
@@ -330,7 +330,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 🌐 Deployment Options
+## Deployment Options
 
 ### Railway (Recommended)
 - Automatic ONNX model loading
@@ -349,7 +349,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 📄 License
+## License
 
 This project uses:
 - **YOLOv8**: Ultralytics (AGPL-3.0 license)
@@ -359,7 +359,7 @@ This project uses:
 
 ---
 
-## 🏆 Key Achievements
+## Key Achievements
 
 - ✅ Custom 6-class object detection model
 - ✅ 200-epoch training with 92.6% precision
@@ -372,3 +372,27 @@ This project uses:
 ---
 
 **Built with advanced computer vision engineering for production-grade object detection.**
+
+## Authors and Contributors
+
+This project was built with the combined team effort of:
+
+*   **Gyanankur Baruah** - [@Gyanankur23](https://github.com/Gyanankur23)
+*   **Huzeafa Khan**  - [@huzaifa07442](https://github.com/huzaifa07442)
+*   **Hritik Poojari** - [@hrit02](https://github.com/hrit02)
+*   **Mansoor Ali** - [@MansoorAli93](https://github.com/MansoorAli93)
+*   **Rehaan Khan** - [@rehaankhan150906-crypto](https://github.com/rehaankhan150906-crypto)
+
+## Contribute to Repository
+
+We welcome contributions and research proposals! To propose changes to the project, feel free to:
+
+1.  **Fork** the repository.
+2.  **Clone** and reproduce the environment.
+3.  Submit a **Pull Request** for review.
+
+*Note: Please ensure you mention **@Gyanankur23** when reproducing or publishing related work.*
+
+## Project License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
